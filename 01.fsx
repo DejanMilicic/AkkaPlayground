@@ -13,7 +13,7 @@ open Akka.Actor
 
 // create a top level actor "System"
 // https://getakka.net/articles/intro/getting-started/tutorial-1.html
-let system = Configuration.defaultConfig () |> System.create "my-system"
+let system = System.create "my-system" <| Configuration.defaultConfig ()
 
 // definition of message that our actor can receive
 type Message =
@@ -26,7 +26,7 @@ type Message =
 // and react to them by printing out a greeting
 
 // define actor and spawn it into the system
-let greetingActor = //                                      greetingActor - this is reference to an actor
+let greetingActor = //                                      greetingActor - this is reference to an actor, IActorRef<Message>
     spawnAnonymous system //                                spawnAnonymous - will create an actor that has no name
     <| props (fun mailbox -> //                             props - define behavior of the actor
         let rec loop () = //                                loop - define recursive loop of the actor
@@ -51,7 +51,7 @@ greetingActor <! Hi
 // spinning up an actor can be shortened
 
 // define message handler with same behavior
-let handler msg =
+let handler msg = //                            Message -> Effect<'Message>
     match msg with
     | Greet name -> printfn $"Hello {name}"
     | Hi -> printfn "Hello from F#!"
@@ -65,31 +65,6 @@ greetingActor2 <! Hi
 greetingActor2 <! Greet "Jane"
 
 //=====================================================
-
-// or, define explicit behavior loop of an actor
-let greeterBehavior (mailbox: Actor<Message>) =
-    let rec loop () =
-        actor {
-            let! msg = mailbox.Receive()
-
-            match msg with
-            | Greet name -> printfn $"Hello {name}"
-            | Hi -> printfn "Hello from F#!"
-
-            return! loop ()
-        }
-
-    loop ()
-
-// and spawn actor using it
-let greeterRef = spawnAnonymous system (props greeterBehavior)
-
-// send messages to the actor
-greeterRef <! Hello "Joe"
-greeterRef <! Goodbye "Joe"
-
-// creating named actor
-// let greetingActor2 = spawn system "greetingActor2" <| props (actorOf handler)
 
 (*
 
@@ -109,18 +84,4 @@ let behavior (m:Actor<_>) =
             return! loop ()
     }
     loop ()
-*)
-
-(*
-let greeter = spawn system "greeter" <| props(fun mailbox ->
-    let rec loop() = actor {
-        let! msg = mailbox.Receive()
-
-        match (msg : Message) with
-        | Hello name -> printf $"Hello, {name}\n"
-        | Goodbye name -> printf $"Goodbye, {name}\n"
-
-        return! loop()
-    }
-    loop())    
 *)
