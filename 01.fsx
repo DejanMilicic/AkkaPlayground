@@ -67,7 +67,10 @@ greetingActor2 <! Greet "Jane"
 //=====================================================
 
 // loop() is a recursive function that will be called for each message
-// but you can also stop the actor upon receiving a specific message
+// upon receiving a message, you can also
+// - decide to "Ignore" it, which means you accepted it, but you will not process it
+// - decide to "Stop", which will stop the actor
+// - explicitly react "Unhandled", which will place message in a dead letter queue
 
 let advancedActor =
     spawnAnonymous system
