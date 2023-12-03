@@ -49,14 +49,14 @@ accumulator2 <! 1
 //=====================================================
 
 let accumulator3Behavior (initState: int) (mailbox: Actor<int>) =
-    let rec loop sum =
+    let rec loop state =
         actor {
             let! msg = mailbox.Receive()
 
-            let newSum = sum + msg
-            printfn $"Sum = {newSum}"
+            let newState = state + msg
+            printfn $"Sum = {newState}"
 
-            return! loop newSum
+            return! loop newState
         }
 
     loop initState
