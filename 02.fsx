@@ -61,6 +61,6 @@ let accumulator3Behavior (initState: int) (mailbox: Actor<int>) =
 
     loop initState
 
-let accumulator3 = spawnAnonymous system (props (accumulator3Behavior 555))
+let accumulator3 = 555 |> accumulator3Behavior |> props |> spawnAnonymous system
 
 accumulator3 <! 1
