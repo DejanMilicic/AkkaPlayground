@@ -66,22 +66,30 @@ greetingActor2 <! Greet "Jane"
 
 //=====================================================
 
-(*
+// loop() is a recursive function that will be called for each message
+// but you can also stop the actor upon receiving a specific message
 
-// stop
-// unhandled
-// loop or not
-// above loop() you can initialize code - use it later on with stateful actors
+let advancedActor =
+    spawnAnonymous system
+    <| props (fun mailbox ->
+        let rec loop () =
+            actor {
+                let! msg = mailbox.Receive()
 
-let behavior (m:Actor<_>) =
-    let rec loop () = actor {
-        let! msg = m.Receive ()
-        match msg with
-        | "stop" -> return Stop
-        | "unhandle" -> return Unhandled
-        | x ->
-            printfn "%s" x
-            return! loop ()
-    }
-    loop ()
-*)
+                match msg with
+                | "stop" -> return Stop
+                | "ignore" -> return Ignore
+                | "unhandled" -> return Unhandled
+                | x ->
+                    printfn $"{x}"
+                    return! loop ()
+            }
+
+        loop ())
+
+advancedActor <! "content" //   message will be processed
+advancedActor <! "ignore" //    message will be ignored
+advancedActor <! "content" //   after ignoring previous message, actor will continue to process messages
+advancedActor <! "unhandled" // message will be unhandled and will end up in a dead letter queue
+advancedActor <! "stop" //      actor will stop processing messages
+advancedActor <! "content" //   since actor is stopped, it will not process any messages, hence this one will end up in a dead letter queue
