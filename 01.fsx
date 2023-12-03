@@ -1,5 +1,7 @@
 // https://github.com/Horusiath/Akkling/blob/master/examples/basic.fsx
-// 
+// https://www.seventeencups.net/posts/building-a-mud-with-f-sharp-and-akka-net-part-one/
+//  https://github.com/17cupsofcoffee/AkkaMUD
+// https://github.com/akkadotnet/akka.net/blob/dev/src/examples/FSharp.Api/Greeter.fs
 
 #r "nuget: Akka.Serialization.Hyperion"
 #r "nuget: Akkling"
