@@ -16,75 +16,46 @@ let system = System.create "my-system" <| Configuration.defaultConfig ()
 
 type CounterChanged = { Delta: int }
 
-type CounterCommand =
+type Command =
     | Inc of int
     | Dec of int
-    | GetState
 
-type CounterMessage =
-    | Command of CounterCommand
+type Message =
+    | Command of Command
     | Event of CounterChanged
 
-let counterBehavior (mailbox: Actor<CounterMessage>) =
+let counterBehavior (mailbox: Actor<Message>) =
     let rec loop state =
         actor {
-            printf $"\nCurrent counter state: {state}\n\n"
+            printf $"\nCurrent counter state: {state}\n"
 
             let! msg = mailbox.Receive()
 
             match msg with
-            | Event(changed) ->
+            | Event changed ->
                 printf "Event applied!\n"
                 return! loop (state + changed.Delta)
-            | Command(cmd) ->
+            | Command cmd ->
                 match cmd with
-                | GetState ->
-                    mailbox.Sender() <! state
-                    return! loop state
-                | Inc num when num > 0 -> return Persist(Event { Delta = num })
-                | Inc num when num < 0 -> raise <| ArgumentOutOfRangeException()
-                | Inc num when num = 0 -> raise <| ArgumentException()
-                | Dec num -> return Persist(Event { Delta = -num })
+                | Inc num ->
+                    if num > 0 then return Persist(Event { Delta = num })
+                    else if num = 0 then raise <| ArgumentNullException()
+                    else if num = -1 then raise <| ArgumentException()
+                    else raise <| ArgumentOutOfRangeException()
+                | Dec num ->
+                    if num > 0 then return Persist(Event { Delta = -num })
+                    else if num = 0 then raise <| ArgumentNullException()
+                    else if num = -1 then raise <| ArgumentException()
+                    else raise <| ArgumentOutOfRangeException()
         }
 
     loop 0
 
-
-//
-// let counter =
-//     spawn system "counter-1"
-//     <| propsPersist (fun mailbox ->
-
-
-/////////////////////////
-
-
-// let workerBehavior (mailbox: Actor<string>) =
-//     let actorId = mailbox.Self.Path.Name
-
-//     let rec loop commands =
-//         actor {
-//             let commandsHistory = "[" + String.concat "," commands + "]"
-//             printfn $"\nActor {actorId} has commands history: {commandsHistory}\n"
-
-//             let! message = mailbox.Receive()
-
-//             match message with
-//             | "null" -> raise <| ArgumentNullException()
-//             | cmd when cmd.StartsWith "-" -> raise <| ArgumentOutOfRangeException()
-//             | cmd when Char.IsPunctuation(cmd[0]) -> raise <| ArgumentException()
-//             | _ -> ()
-
-//             return! loop (message :: commands)
-//         }
-
-//     loop ([])
-
-type Message =
+type SupervisorMessage =
     | CreateActor of string
-    | ActorCommand of string * CounterMessage
+    | ActorCommand of string * Message
 
-let supervisingBehavior (mailbox: Actor<Message>) =
+let supervisor (mailbox: Actor<SupervisorMessage>) =
     let rec loop () =
         actor {
             let! message = mailbox.Receive()
@@ -123,28 +94,27 @@ let strategy () =
 // starting supervising actor
 // that can create new actors and send them commands
 // also, monitors children, and can react upon their failures
-let supervisor =
+let supervisorActor =
     spawn system "runner"
-    <| { props supervisingBehavior with
+    <| { props supervisor with
            SupervisionStrategy = Some(strategy ()) }
 
 // supervising strategy
 
-// "null"   -> ArgumentNullException        -> stop actor       -> actor is dead, messages not delivered anymore
-// "-"      -> ArgumentOutOfRangeException  -> restart actor    -> actor is restarted, state is lost
-// ".xxx"   -> ArgumentException            -> resume actor     -> actor is resumed, state is preserved
+// 0    -> ArgumentNullException        -> stop actor       -> actor is dead, messages not delivered anymore
+// -1   -> ArgumentException            -> resume actor     -> actor is resumed, state is preserved
+// -2   -> ArgumentOutOfRangeException  -> restart actor    -> actor is restarted, state is reconstructed from journal
 
-supervisor <! CreateActor "counter"
+supervisorActor <! CreateActor "counter"
 
-supervisor <! ActorCommand("counter", Inc 1 |> Command)
-supervisor <! ActorCommand("counter", Inc 0 |> Command)
-supervisor <! ActorCommand("counter", Inc -1 |> Command)
-
-// actor restarted, state is lost
-supervisor <! ActorCommand("counter", "-5")
+supervisorActor <! ActorCommand("counter", Inc 1 |> Command)
+supervisorActor <! ActorCommand("counter", Inc 3 |> Command)
 
 // actor resumed, state is preserved
-supervisor <! ActorCommand("counter", ".2")
+supervisorActor <! ActorCommand("counter", Inc -1 |> Command)
+
+// actor restarted, state is reconstructed
+supervisorActor <! ActorCommand("counter", Inc -2 |> Command)
 
 // actor stopped, messages not delivered anymore
-supervisor <! ActorCommand("counter", "null")
+supervisorActor <! ActorCommand("counter", Inc 0 |> Command)
