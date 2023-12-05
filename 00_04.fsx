@@ -50,23 +50,23 @@ let supervisingBehavior (mailbox: Actor<Message>) =
     loop ()
 
 let strategy () =
-    Strategy.OneForOne(
+    Strategy.OneForOne( // supervising strategy applicable only to the failed child actors
         (fun ex ->
             printfn "\nInvoking supervision strategy\n"
 
             match ex with
             | :? ArgumentNullException ->
                 printfn "Stopping actor"
-                Directive.Stop
+                Directive.Stop // stops the actor
             | :? ArgumentOutOfRangeException ->
                 printfn "Restarting actor"
-                Directive.Restart
+                Directive.Restart // discards actor instance and replaces it with a new one, then resumes message processing
             | :? ArgumentException ->
                 printfn "Resuming actor"
-                Directive.Resume
+                Directive.Resume // resumes message processing
             | _ -> Directive.Escalate),
-        3,
-        TimeSpan.FromSeconds(10.)
+        3, // max retries
+        TimeSpan.FromSeconds(10.) // time window for retries
     )
 
 // starting supervising actor
