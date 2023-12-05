@@ -33,7 +33,7 @@ type Message =
     | CreateActor of string
     | ActorCommand of string * string
 
-let supervisingActor (mailbox: Actor<Message>) =
+let supervisingBehavior (mailbox: Actor<Message>) =
     let rec loop () =
         actor {
             let! message = mailbox.Receive()
@@ -71,14 +71,20 @@ let strategy () =
 
 let supervisor =
     spawn system "runner"
-    <| { props supervisingActor with
+    <| { props supervisingBehavior with
            SupervisionStrategy = Some(strategy ()) }
+
+// supervising strategy
+
+// "null"   -> ArgumentNullException        -> stop actor       -> actor is dead, messages not delivered anymore
+// "-"      -> ArgumentOutOfRangeException  -> restart actor    -> actor is restarted, state is lost
+// ".xxx"   -> ArgumentException            -> resume actor     -> actor is resumed, state is preserved
 
 supervisor <! CreateActor "actor1"
 
-supervisor <! ActorCommand("actor1", "1")
-supervisor <! ActorCommand("actor1", "2")
-supervisor <! ActorCommand("actor1", "3")
-supervisor <! ActorCommand("actor1", "-5")
-supervisor <! ActorCommand("actor1", ".2")
-supervisor <! ActorCommand("actor1", "null")
+supervisor <! ActorCommand("actor1", "1") //    message is processed
+supervisor <! ActorCommand("actor1", "2") //    message is processed
+supervisor <! ActorCommand("actor1", "3") //    message is processed
+supervisor <! ActorCommand("actor1", "-5") //   actor restarted, state is lost
+supervisor <! ActorCommand("actor1", ".2") //   actor resumed, state is preserved
+supervisor <! ActorCommand("actor1", "null") // actor stopped, messages not delivered anymore
