@@ -8,8 +8,8 @@ open System
 open Akkling
 
 type Message =
-    | Greet of string
     | Hi
+    | Greet of string
 
 let system = System.create "my-system" <| Configuration.defaultConfig ()
 
