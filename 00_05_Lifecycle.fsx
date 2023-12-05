@@ -1,4 +1,3 @@
-//#r "nuget: Akka.Serialization.Hyperion"
 #r "nuget: Akkling"
 
 open System
