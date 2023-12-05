@@ -22,32 +22,6 @@ type Message =
 
 //=====================================================
 
-// basic actor that will be able to accept messages of type Message
-// and react to them by printing out a greeting
-
-// define actor and spawn it into the system
-let greetingActor = //                                      greetingActor - this is reference to an actor, IActorRef<Message>
-    spawnAnonymous system //                                spawnAnonymous - will create an actor that has no name
-    <| props (fun mailbox -> //                             props - define behavior of the actor
-        let rec loop () = //                                loop - define recursive loop of the actor
-            actor { //                                      actor - ActorBuilder that will build an actor from message handler
-                let! msg = mailbox.Receive() //             Receive - fetch next message from mailbox, if any
-
-                match msg with //                           thanx to F# type inference, this will be stronly typed
-                | Greet name -> printfn $"Hello {name}"
-                | Hi -> printfn "Hello from F#!"
-
-                return! loop () //                          return! - will return result of the actor, and continue with the loop
-            }
-
-        loop ()) //                                         call loop() to start the actor
-
-// send messages to the actor
-greetingActor <! Greet "Joe"
-greetingActor <! Hi
-
-//=====================================================
-
 // spinning up an actor can be shortened
 
 // define message handler with same behavior
