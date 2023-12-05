@@ -14,7 +14,7 @@ let workerBehavior (mailbox: Actor<string>) =
     let rec loop commands =
         actor {
             let commandsHistory = "[" + String.concat "," commands + "]"
-            printfn $"Actor {actorId} has commands history: {commandsHistory}"
+            printfn $"\nActor {actorId} has commands history: {commandsHistory}\n"
 
             let! message = mailbox.Receive()
 
@@ -52,7 +52,7 @@ let supervisingBehavior (mailbox: Actor<Message>) =
 let strategy () =
     Strategy.OneForOne(
         (fun ex ->
-            printfn "Invoking supervision strategy"
+            printfn "\nInvoking supervision strategy\n"
 
             match ex with
             | :? ArgumentNullException ->
@@ -69,6 +69,9 @@ let strategy () =
         TimeSpan.FromSeconds(10.)
     )
 
+// starting supervising actor
+// that can create new actors and send them commands
+// also, monitors children, and can react upon their failures
 let supervisor =
     spawn system "runner"
     <| { props supervisingBehavior with
@@ -82,9 +85,15 @@ let supervisor =
 
 supervisor <! CreateActor "actor1"
 
-supervisor <! ActorCommand("actor1", "1") //    message is processed
-supervisor <! ActorCommand("actor1", "2") //    message is processed
-supervisor <! ActorCommand("actor1", "3") //    message is processed
-supervisor <! ActorCommand("actor1", "-5") //   actor restarted, state is lost
-supervisor <! ActorCommand("actor1", ".2") //   actor resumed, state is preserved
-supervisor <! ActorCommand("actor1", "null") // actor stopped, messages not delivered anymore
+supervisor <! ActorCommand("actor1", "1")
+supervisor <! ActorCommand("actor1", "2")
+supervisor <! ActorCommand("actor1", "3")
+
+// actor restarted, state is lost
+supervisor <! ActorCommand("actor1", "-5")
+
+// actor resumed, state is preserved
+supervisor <! ActorCommand("actor1", ".2")
+
+// actor stopped, messages not delivered anymore
+supervisor <! ActorCommand("actor1", "null")
