@@ -12,8 +12,8 @@ open Akkling
 let system = System.create "my-system" <| Configuration.defaultConfig ()
 
 // spawn anonymous actor and get a reference to it
-let greetingActor = //
-    spawnAnonymous system //
+let greetingActor =
+    spawnAnonymous system
     <| props (fun (mailbox: Actor<string>) -> //            props - define behavior of the actor
         let rec loop () =
             actor { //                                      actor - ActorBuilder that will build an actor from message handler
