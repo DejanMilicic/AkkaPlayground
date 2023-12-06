@@ -15,8 +15,9 @@ let greeterBehavior (mailbox: Actor<string>) = // we can define behavior of the 
     let rec loop () =
         actor {
             let! msg = mailbox.Receive()
+            let sender = mailbox.Sender() 
 
-            mailbox.Sender() <! $"Hello, {msg}" // replying back to the sender
+            sender <! $"Hello, {msg}" // replying back to the sender
 
             return! loop ()
         }
