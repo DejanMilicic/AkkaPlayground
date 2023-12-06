@@ -7,7 +7,7 @@ open System
 open Akkling
 open Akka.Actor
 
-let system = System.create "basic-sys" <| Configuration.defaultConfig ()
+let system = System.create "my-system" <| Configuration.defaultConfig ()
 
 let actor (m: Actor<_>) =
     let rec loop () =
@@ -27,7 +27,7 @@ let actor (m: Actor<_>) =
 
     loop ()
 
-let bref = spawn system "second-actor" <| props actor
+let aref = spawnAnonymous system <| props actor
 
-bref <! "ok"
-(retype bref) <! PoisonPill.Instance
+aref <! "ok"
+(retype aref) <! PoisonPill.Instance
