@@ -1,4 +1,4 @@
-// Actor lifecycle events
+// Actor lifecycle basics
 
 #r "nuget: Akkling"
 #r "nuget: Akka.Serialization.Hyperion"
@@ -15,7 +15,7 @@ let actor (m: Actor<_>) =
             let! (msg: obj) = m.Receive()
 
             match msg with
-            | LifecycleEvent e ->
+            | :? LifecycleEvent as e ->
                 match e with
                 | PreStart -> printfn $"\n\t\t Actor {m.Self} is starting... \n"
                 | PostStop -> printfn $"\n\t\t Actor {m.Self} has stopped \n"
