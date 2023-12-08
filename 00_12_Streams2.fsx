@@ -11,6 +11,7 @@ open Akkling.Streams
 open System.Linq
 open System.Numerics
 open Akka.Actor
+open System.IO
 
 
 let system = System.create "streams-sys" <| Configuration.defaultConfig ()
@@ -37,3 +38,15 @@ Enumerable.Range(1, 100)
 |> Source.runWith mat (Sink.toFile "c:\\temp\\factorials.txt")
 
 //================================================================================
+
+let lineSink source =
+    source
+    |> Source.map (fun x -> Akka.IO.ByteString.FromString(x.ToString() + "\n"))
+    |> Source.toMat (FileIO.ToFile(new FileInfo("c:\\temp\\factorials.txt"))) Keep.right
+
+Enumerable.Range(1, 100)
+|> Source.From
+|> Source.scan (fun acc next -> acc * bigint next) (bigint 1)
+|> Source.skip 1 // since scan will output initial value as well
+|> lineSink
+|> Graph.run mat
