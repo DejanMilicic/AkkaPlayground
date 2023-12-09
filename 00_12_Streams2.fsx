@@ -48,4 +48,16 @@ Enumerable.Range(1, 100)
 |> lineSink "c:\\temp\\factorials.txt"
 |> Graph.run mat
 
+// time-based processing
+
+let factorials =
+    Enumerable.Range(1, 100)
+    |> Source.From
+    |> Source.scan (fun acc next -> acc * bigint next) (bigint 1)
+
+factorials
+|> Source.zipWith (Source.From(Enumerable.Range(0, 20))) (fun num idx -> $"{idx}! = {num}")
+|> Source.throttle ThrottleMode.Shaping 1 1 (TimeSpan.FromSeconds(1.0))
+|> Source.runForEach mat (fun x -> printfn $"{x}")
+
 //================================================================================
