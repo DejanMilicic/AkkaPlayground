@@ -1,3 +1,6 @@
+// following https://getakka.net/articles/streams/quickstart.html
+// and coding allong in Akkling
+
 #r "nuget: Akka.Serialization.Hyperion"
 #r "nuget: Akka.Streams"
 #r "nuget: Akkling"
@@ -31,7 +34,7 @@ Enumerable.Range(1, 100)
 |> Source.map (fun x -> Akka.IO.ByteString.FromString(x.ToString() + "\n"))
 |> Source.runWith mat (Sink.toFile "c:\\temp\\factorials.txt")
 
-// custom sink
+// calculating factorials into file, but this time with a custom sink
 
 let lineSink filename source =
     source
