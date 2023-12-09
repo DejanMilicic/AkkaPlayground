@@ -13,14 +13,8 @@ open System.Numerics
 open Akka.Actor
 open System.IO
 
-
 let system = System.create "streams-sys" <| Configuration.defaultConfig ()
-
 let mat = system.Materializer()
-
-let source = [| 1; 2; 3; 4; 5 |] |> Source.From
-
-let source2 = Enumerable.Range(1, 100) |> Source.From
 
 // print out first 100 numbers
 
@@ -37,16 +31,18 @@ Enumerable.Range(1, 100)
 |> Source.map (fun x -> Akka.IO.ByteString.FromString(x.ToString() + "\n"))
 |> Source.runWith mat (Sink.toFile "c:\\temp\\factorials.txt")
 
-//================================================================================
+// custom sink
 
-let lineSink source =
+let lineSink filename source =
     source
     |> Source.map (fun x -> Akka.IO.ByteString.FromString(x.ToString() + "\n"))
-    |> Source.toMat (FileIO.ToFile(new FileInfo("c:\\temp\\factorials.txt"))) Keep.right
+    |> Source.toMat (FileIO.ToFile(new FileInfo(filename))) Keep.right
 
 Enumerable.Range(1, 100)
 |> Source.From
 |> Source.scan (fun acc next -> acc * bigint next) (bigint 1)
 |> Source.skip 1 // since scan will output initial value as well
-|> lineSink
+|> lineSink "c:\\temp\\factorials.txt"
 |> Graph.run mat
+
+//================================================================================
