@@ -94,10 +94,77 @@ let webSocketWork (uri: Uri) (message: string) =
 
         do! clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Done", CancellationToken.None) |> Async.AwaitTask
     }
-    
+
 let message =
     """{ "type": "subscribe", "product_ids": ["BTC-USD"], "channels": ["heartbeat"]}"""
 
 let uri = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
 
 webSocketWork uri message |> Async.RunSynchronously
+
+==============================================================================
+==============================================================================
+
+
+#r "System.Net.WebSockets"
+#r "System.Threading"
+#r "nuget: Akka.Serialization.Hyperion"
+#r "nuget: Akka.Streams"
+#r "nuget: Akkling"
+#r "nuget: Akkling.Streams"
+
+open System
+open System.Net.WebSockets
+open System.Threading
+open System.Text
+open System
+open Akka.Streams
+open Akka.Streams.Dsl
+open Akkling
+open Akkling.Streams
+open System.Linq
+open System.Numerics
+open Akka.Actor
+open System.IO
+open System
+open System.Net.WebSockets
+open System.Threading
+open System.Text
+
+let webSocketSource (uri: Uri) (message: string) =
+    seq {
+        use clientWebSocket = new ClientWebSocket()
+        clientWebSocket.ConnectAsync(uri, CancellationToken.None).Wait()
+
+        // Send a message
+        let messageBytes = Encoding.UTF8.GetBytes(message)
+        let sendBuffer = ArraySegment<byte>(messageBytes)
+        clientWebSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None).Wait()
+
+        let receiveBuffer = ArraySegment<byte>(Array.zeroCreate 1024)
+        let mutable shouldContinue = true
+
+        while shouldContinue && not clientWebSocket.CloseStatus.HasValue do
+            let result = clientWebSocket.ReceiveAsync(receiveBuffer, CancellationToken.None).Result
+            if result.MessageType = WebSocketMessageType.Close then
+                shouldContinue <- false
+            else
+                let receivedMessage = Encoding.UTF8.GetString(receiveBuffer.Array, 0, result.Count)
+                yield receivedMessage
+
+        clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Done", CancellationToken.None).Wait()
+    }
+
+let message = """{ "type": "subscribe", "product_ids": ["BTC-USD"], "channels": ["heartbeat"]}"""
+let url = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
+
+// Example usage with Akka Stream (or Akkling Streams in F#)
+
+let system = System.create "streams-sys" <| Configuration.defaultConfig ()
+let mat = system.Materializer()
+
+Source.From(webSocketSource url message)
+|> Source.runForEach mat (fun x -> printfn $"{x}")
+
+//let source = 
+//source.To(Sink.ForEach(fun msg -> printfn "Received: %s" msg)).Run(materializer)
