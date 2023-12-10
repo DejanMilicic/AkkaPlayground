@@ -22,6 +22,10 @@ wss://ws-feed-public.sandbox.exchange.coinbase.com
 #r "nuget: Akka.Streams"
 #r "nuget: Akkling"
 #r "nuget: Akkling.Streams"
+#r "nuget: Akka.Serialization.Hyperion"
+#r "nuget: Akka.Streams"
+#r "nuget: Akkling"
+#r "nuget: Akkling.Streams"
 
 open System
 open System.Net.WebSockets
@@ -76,16 +80,16 @@ let webSocketWork (uri: Uri) (message: string) =
             |> Async.AwaitTask
     }
 
-let message =
+let message1 =
     """{ "type": "subscribe", "product_ids": ["BTC-USD"], "channels": ["heartbeat"]}"""
 
 let uri = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
 
-webSocketWork uri message |> Async.RunSynchronously
+webSocketWork uri message1 |> Async.RunSynchronously
 
 //==============================================================================
 
-let webSocketWork (uri: Uri) (message: string) =
+let webSocketWork2 (uri: Uri) (message: string) =
     async {
         use clientWebSocket = new ClientWebSocket()
 
@@ -123,12 +127,12 @@ let webSocketWork (uri: Uri) (message: string) =
             |> Async.AwaitTask
     }
 
-let message =
+let message2 =
     """{ "type": "subscribe", "product_ids": ["BTC-USD"], "channels": ["heartbeat"]}"""
 
-let uri = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
+let uri2 = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
 
-webSocketWork uri message |> Async.RunSynchronously
+webSocketWork uri2 message2 |> Async.RunSynchronously
 
 //==============================================================================
 
