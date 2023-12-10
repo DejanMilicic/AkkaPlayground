@@ -26,6 +26,7 @@ wss://ws-feed-public.sandbox.exchange.coinbase.com
 #r "nuget: Akka.Streams"
 #r "nuget: Akkling"
 #r "nuget: Akkling.Streams"
+#r "nuget: FSharp.Control.AsyncSeq"
 
 open System
 open System.Net.WebSockets
@@ -213,3 +214,65 @@ clientWebSocketEcho() |> Async.RunSynchronously
 *)
 
 //==============================================================================
+
+open System
+open System.Net.WebSockets
+open System.Text
+open System.Threading
+open FSharp.Control
+
+
+let webSocketSourceAsync (uri: Uri) (message: string) : AsyncSeq<string> =
+    asyncSeq {
+        use clientWebSocket = new ClientWebSocket()
+        do! clientWebSocket.ConnectAsync(uri, CancellationToken.None) |> Async.AwaitTask
+
+        // Send a message
+        let messageBytes = Encoding.UTF8.GetBytes(message)
+        let sendBuffer = ArraySegment<byte>(messageBytes)
+
+        do!
+            clientWebSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None)
+            |> Async.AwaitTask
+
+        let receiveBuffer = ArraySegment<byte>(Array.zeroCreate 1024)
+        let mutable shouldContinue = true
+
+        while shouldContinue && not clientWebSocket.CloseStatus.HasValue do
+            let! result =
+                clientWebSocket.ReceiveAsync(receiveBuffer, CancellationToken.None)
+                |> Async.AwaitTask
+
+            if result.MessageType = WebSocketMessageType.Close then
+                shouldContinue <- false
+            else
+                let receivedMessage = Encoding.UTF8.GetString(receiveBuffer.Array, 0, result.Count)
+                yield receivedMessage
+
+        do!
+            clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Done", CancellationToken.None)
+            |> Async.AwaitTask
+    }
+
+let message3 =
+    """{ "type": "subscribe", "product_ids": ["BTC-USD"], "channels": ["heartbeat"]}"""
+
+let url3 = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
+
+// Example usage with Akka Stream (or Akkling Streams in F#)
+
+let system3 = System.create "streams-sys" <| Configuration.defaultConfig ()
+let mat3 = system.Materializer()
+
+let printMessages (uri: Uri) (message: string) =
+    webSocketSourceAsync uri message
+    |> AsyncSeq.iterAsync (fun msg -> async { printfn "%s" msg })
+    |> Async.RunSynchronously
+
+printMessages
+    (Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com"))
+    """{ "type": "subscribe", "product_ids": ["BTC-USD"], "channels": ["heartbeat"]}"""
+
+
+// Source.From(webSocketSourceAsync url3 message3)
+// |> Source.runForEach mat3 (fun x -> printfn $"{x}")
