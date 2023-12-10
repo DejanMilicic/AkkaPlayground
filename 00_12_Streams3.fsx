@@ -14,7 +14,32 @@ wss://ws-feed-public.sandbox.exchange.coinbase.com
 
 #r "System.Net.WebSockets"
 #r "System.Threading"
+#r "System.Net.WebSockets"
+#r "System.Threading"
+#r "System.Net.WebSockets"
+#r "System.Threading"
+#r "nuget: Akka.Serialization.Hyperion"
+#r "nuget: Akka.Streams"
+#r "nuget: Akkling"
+#r "nuget: Akkling.Streams"
 
+open System
+open System.Net.WebSockets
+open System.Threading
+open System.Text
+open System
+open System.Net.WebSockets
+open System.Threading
+open System.Text
+open System
+open Akka.Streams
+open Akka.Streams.Dsl
+open Akkling
+open Akkling.Streams
+open System.Linq
+open System.Numerics
+open Akka.Actor
+open System.IO
 open System
 open System.Net.WebSockets
 open System.Threading
@@ -59,15 +84,6 @@ let uri = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
 webSocketWork uri message |> Async.RunSynchronously
 
 //==============================================================================
-//==============================================================================
-
-#r "System.Net.WebSockets"
-#r "System.Threading"
-
-open System
-open System.Net.WebSockets
-open System.Threading
-open System.Text
 
 let webSocketWork (uri: Uri) (message: string) =
     async {
@@ -115,33 +131,6 @@ let uri = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
 webSocketWork uri message |> Async.RunSynchronously
 
 //==============================================================================
-//==============================================================================
-
-
-#r "System.Net.WebSockets"
-#r "System.Threading"
-#r "nuget: Akka.Serialization.Hyperion"
-#r "nuget: Akka.Streams"
-#r "nuget: Akkling"
-#r "nuget: Akkling.Streams"
-
-open System
-open System.Net.WebSockets
-open System.Threading
-open System.Text
-open System
-open Akka.Streams
-open Akka.Streams.Dsl
-open Akkling
-open Akkling.Streams
-open System.Linq
-open System.Numerics
-open Akka.Actor
-open System.IO
-open System
-open System.Net.WebSockets
-open System.Threading
-open System.Text
 
 let webSocketSource (uri: Uri) (message: string) =
     seq {
