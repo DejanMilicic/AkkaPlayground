@@ -12,17 +12,13 @@ wss://ws-feed-public.sandbox.exchange.coinbase.com
 
 // https://github.com/marcpiechura/Akka.Net-Streams-reactive-tweets/blob/master/src/Reactive.Tweets/Program.cs
 
-#r "System.Net.WebSockets"
 #r "System.Threading"
 #r "System.Net.WebSockets"
 #r "System.Threading"
 #r "System.Net.WebSockets"
 #r "System.Threading"
-#r "nuget: Akka.Serialization.Hyperion"
-#r "nuget: Akka.Streams"
 #r "nuget: Akkling"
 #r "nuget: Akkling.Streams"
-#r "nuget: Akka.Serialization.Hyperion"
 #r "nuget: Akka.Streams"
 #r "nuget: Akkling"
 #r "nuget: Akkling.Streams"
@@ -32,23 +28,10 @@ open System
 open System.Net.WebSockets
 open System.Threading
 open System.Text
-open System
-open System.Net.WebSockets
-open System.Threading
-open System.Text
-open System
-open Akka.Streams
 open Akka.Streams.Dsl
 open Akkling
 open Akkling.Streams
-open System.Linq
-open System.Numerics
-open Akka.Actor
-open System.IO
-open System
-open System.Net.WebSockets
-open System.Threading
-open System.Text
+open FSharp.Control
 
 let webSocketWork (uri: Uri) (message: string) =
     async {
@@ -215,13 +198,6 @@ clientWebSocketEcho() |> Async.RunSynchronously
 
 //==============================================================================
 
-open System
-open System.Net.WebSockets
-open System.Text
-open System.Threading
-open FSharp.Control
-
-
 let webSocketSourceAsync (uri: Uri) (message: string) : AsyncSeq<string> =
     asyncSeq {
         use clientWebSocket = new ClientWebSocket()
@@ -261,8 +237,8 @@ let url3 = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
 
 // Example usage with Akka Stream (or Akkling Streams in F#)
 
-let system3 = System.create "streams-sys" <| Configuration.defaultConfig ()
-let mat3 = system.Materializer()
+//let system3 = System.create "streams-sys" <| Configuration.defaultConfig ()
+//let mat3 = system3.Materializer()
 
 let printMessages (uri: Uri) (message: string) =
     webSocketSourceAsync uri message
