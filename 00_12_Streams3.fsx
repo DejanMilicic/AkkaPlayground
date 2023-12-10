@@ -168,3 +168,35 @@ Source.From(webSocketSource url message)
 
 //let source = 
 //source.To(Sink.ForEach(fun msg -> printfn "Received: %s" msg)).Run(materializer)
+
+//==============================================================================
+// alrternative versions below
+(*
+let webSocket = WebSocket.CreateClientWebSocket("wss://ws-feed-public.sandbox.exchange.coinbase.com")
+
+
+let message = "{\"type\":\"subscriptions\",\"channels\":[{\"name\":\"heartbeat\",\"product_ids\":[\"BTC-GBP\"]}]}"
+
+let clientWebSocketEcho () = 
+    async {
+        use client = new ClientWebSocket()
+        do! client.ConnectAsync(Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com"), CancellationToken.None) |> Async.AwaitTask
+
+        let buffer = Encoding.UTF8.GetBytes(message)
+        let! result = client.ReceiveAsync(ArraySegment(buffer), CancellationToken.None) |> Async.AwaitTask
+
+        while not result.CloseStatus.HasValue do
+            do! client.SendAsync(ArraySegment(buffer, 0, result.Count), result.MessageType, result.EndOfMessage, CancellationToken.None) |> Async.AwaitTask
+            let! newResult = client.ReceiveAsync(ArraySegment(buffer), CancellationToken.None) |> Async.AwaitTask
+            //printf "Received: %s" (Encoding.UTF8.GetString(newResult, 0, newResult.Count))
+            printf "received!!!\n"
+            ()
+
+        //do! client.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None) |> Async.AwaitTask
+    }
+
+clientWebSocketEcho() |> Async.RunSynchronously
+*)
+
+//==============================================================================
+
