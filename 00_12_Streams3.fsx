@@ -10,6 +10,8 @@ wss://ws-feed-public.sandbox.exchange.coinbase.com
 *)
 //==============================================================================
 
+// https://github.com/marcpiechura/Akka.Net-Streams-reactive-tweets/blob/master/src/Reactive.Tweets/Program.cs
+
 #r "System.Net.WebSockets"
 #r "System.Threading"
 
@@ -77,22 +79,32 @@ let webSocketWork (uri: Uri) (message: string) =
         let messageBytes = Encoding.UTF8.GetBytes(message)
         let sendBuffer = ArraySegment<byte>(messageBytes)
 
-        do! clientWebSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None) |> Async.AwaitTask
+        do!
+            clientWebSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None)
+            |> Async.AwaitTask
 
         let receiveBuffer = ArraySegment<byte>(Array.zeroCreate 1024)
 
         // Keep receiving messages
         let mutable keepReceiving = true
+
         while keepReceiving do
-            let! receivedResult = clientWebSocket.ReceiveAsync(receiveBuffer, CancellationToken.None) |> Async.AwaitTask
-            let receivedMessage = Encoding.UTF8.GetString(receiveBuffer.Array, 0, receivedResult.Count)
+            let! receivedResult =
+                clientWebSocket.ReceiveAsync(receiveBuffer, CancellationToken.None)
+                |> Async.AwaitTask
+
+            let receivedMessage =
+                Encoding.UTF8.GetString(receiveBuffer.Array, 0, receivedResult.Count)
+
             printfn "Received: %s" receivedMessage
 
-            // Update keepReceiving based on some condition or message content
-            // For example, to stop when a specific message is received:
-            // keepReceiving <- not (receivedMessage.Contains("specific stop message"))
+        // Update keepReceiving based on some condition or message content
+        // For example, to stop when a specific message is received:
+        // keepReceiving <- not (receivedMessage.Contains("specific stop message"))
 
-        do! clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Done", CancellationToken.None) |> Async.AwaitTask
+        do!
+            clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Done", CancellationToken.None)
+            |> Async.AwaitTask
     }
 
 let message =
@@ -139,23 +151,32 @@ let webSocketSource (uri: Uri) (message: string) =
         // Send a message
         let messageBytes = Encoding.UTF8.GetBytes(message)
         let sendBuffer = ArraySegment<byte>(messageBytes)
-        clientWebSocket.SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None).Wait()
+
+        clientWebSocket
+            .SendAsync(sendBuffer, WebSocketMessageType.Text, true, CancellationToken.None)
+            .Wait()
 
         let receiveBuffer = ArraySegment<byte>(Array.zeroCreate 1024)
         let mutable shouldContinue = true
 
         while shouldContinue && not clientWebSocket.CloseStatus.HasValue do
-            let result = clientWebSocket.ReceiveAsync(receiveBuffer, CancellationToken.None).Result
+            let result =
+                clientWebSocket.ReceiveAsync(receiveBuffer, CancellationToken.None).Result
+
             if result.MessageType = WebSocketMessageType.Close then
                 shouldContinue <- false
             else
                 let receivedMessage = Encoding.UTF8.GetString(receiveBuffer.Array, 0, result.Count)
                 yield receivedMessage
 
-        clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Done", CancellationToken.None).Wait()
+        clientWebSocket
+            .CloseAsync(WebSocketCloseStatus.NormalClosure, "Done", CancellationToken.None)
+            .Wait()
     }
 
-let message = """{ "type": "subscribe", "product_ids": ["BTC-USD"], "channels": ["heartbeat"]}"""
+let message =
+    """{ "type": "subscribe", "product_ids": ["BTC-USD"], "channels": ["heartbeat"]}"""
+
 let url = Uri("wss://ws-feed-public.sandbox.exchange.coinbase.com")
 
 // Example usage with Akka Stream (or Akkling Streams in F#)
@@ -166,7 +187,7 @@ let mat = system.Materializer()
 Source.From(webSocketSource url message)
 |> Source.runForEach mat (fun x -> printfn $"{x}")
 
-//let source = 
+//let source =
 //source.To(Sink.ForEach(fun msg -> printfn "Received: %s" msg)).Run(materializer)
 
 //==============================================================================
@@ -199,4 +220,3 @@ clientWebSocketEcho() |> Async.RunSynchronously
 *)
 
 //==============================================================================
-
