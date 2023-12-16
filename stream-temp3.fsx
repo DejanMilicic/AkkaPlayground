@@ -52,3 +52,12 @@ let s =
     |> Graph.run mat
 
 s <! "Boo"
+
+
+let s2: IActorRef<string> =
+    Source.actorRef OverflowStrategy.DropNew 1000
+    |> Source.mapMaterializedValue (spawnActor1)
+    |> Source.toMat (Sink.forEach (fun s -> actor2ref <! s)) Keep.left
+    |> Graph.run mat
+
+s2 <! "Boo"
