@@ -13,24 +13,24 @@ let system = System.create "streams-sys" <| Configuration.defaultConfig ()
 
 let mat = system.Materializer()
 
-let actor targetRef (m: Actor<_>) =
+let actor1 targetRef (m: Actor<_>) =
     let rec loop () =
         actor {
             let! msg = m.Receive()
-            printf "Actor Received: %s\n\n" msg
+            printf "Actor1 Received: %s\n\n" msg
             targetRef <! msg + "!!!"
             return! loop ()
         }
 
     loop ()
 
-let spawnActor targetRef =
-    spawnAnonymous system <| props (actor targetRef)
+let spawnActor1 targetRef =
+    spawnAnonymous system <| props (actor1 targetRef)
 
 let s =
     Source.actorRef OverflowStrategy.DropNew 1000
-    |> Source.mapMaterializedValue (spawnActor)
-    |> Source.mapMaterializedValue (spawnActor)
+    |> Source.mapMaterializedValue (spawnActor1)
+    |> Source.mapMaterializedValue (spawnActor1)
     //|> Source.toMat (Sink.forEach (fun s -> printfn $"Actor Returned: {s}\n\n")) Keep.left
     |> Source.toMat Sink.ignore Keep.left
     |> Graph.run mat
