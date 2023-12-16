@@ -30,8 +30,9 @@ let spawnActor targetRef =
 let s =
     Source.actorRef OverflowStrategy.DropNew 1000
     |> Source.mapMaterializedValue (spawnActor)
-    |> Source.toMat (Sink.forEach (fun s -> printfn $"Actor Returned: {s}\n\n")) Keep.left
-    //|> Source.toMat Sink.ignore Keep.left
+    |> Source.mapMaterializedValue (spawnActor)
+    //|> Source.toMat (Sink.forEach (fun s -> printfn $"Actor Returned: {s}\n\n")) Keep.left
+    |> Source.toMat Sink.ignore Keep.left
     |> Graph.run mat
 
 s <! "Boo"
