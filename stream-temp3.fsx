@@ -27,12 +27,28 @@ let actor1 targetRef (m: Actor<_>) =
 let spawnActor1 targetRef =
     spawnAnonymous system <| props (actor1 targetRef)
 
+let actor2 (m: Actor<_>) =
+    let rec loop () =
+        actor {
+            let! msg = m.Receive()
+            printf "Actor2 Received: %s\n\n" msg
+            return! loop ()
+        }
+
+    loop ()
+
+let actor2ref = spawnAnonymous system <| props actor2
+
+
 let s =
     Source.actorRef OverflowStrategy.DropNew 1000
     |> Source.mapMaterializedValue (spawnActor1)
-    |> Source.mapMaterializedValue (spawnActor1)
-    //|> Source.toMat (Sink.forEach (fun s -> printfn $"Actor Returned: {s}\n\n")) Keep.left
-    |> Source.toMat Sink.ignore Keep.left
+    //|> Source.runForEach mat (fun s -> printfn $"Actor Returned: {s}\n\n")
+
+    //|> Source.runForEach mat (fun s -> actor2ref <! s)
+    |> Source.toMat (Sink.forEach (fun s -> actor2ref <! s)) Keep.left
+
+    //|> Source.toMat Sink.ignore Keep.left
     |> Graph.run mat
 
 s <! "Boo"
