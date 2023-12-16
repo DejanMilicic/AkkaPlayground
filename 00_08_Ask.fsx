@@ -11,11 +11,11 @@ open Akkling
 
 let system = System.create "my-system" <| Configuration.defaultConfig ()
 
-let greeterBehavior (mailbox: Actor<string>) = // we can define behavior of the actor in a separate function
+let greeter (mailbox: Actor<string>) = // we can define behavior of the actor in a separate function
     let rec loop () =
         actor {
             let! msg = mailbox.Receive()
-            let sender = mailbox.Sender() 
+            let sender = mailbox.Sender()
 
             sender <! $"Hello, {msg}" // replying back to the sender
 
@@ -24,10 +24,10 @@ let greeterBehavior (mailbox: Actor<string>) = // we can define behavior of the 
 
     loop ()
 
-let greeter = spawnAnonymous system <| props greeterBehavior // spawn actor from behavior
+let greeterActor = spawnAnonymous system <| props greeter // spawn actor from behavior
 
 let askGreeter name : string =
-    greeter <? name |> Async.RunSynchronously
+    greeterActor <? name |> Async.RunSynchronously
 
 askGreeter "John"
 askGreeter "Paul"
