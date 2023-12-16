@@ -14,7 +14,7 @@ let system = System.create "streams-sys" <| Configuration.defaultConfig ()
 let mat = system.Materializer()
 
 
-let behavior targetRef (m: Actor<_>) =
+let actor targetRef (m: Actor<_>) =
     let rec loop () =
         actor {
             let! msg = m.Receive()
@@ -25,7 +25,7 @@ let behavior targetRef (m: Actor<_>) =
     loop ()
 
 let spawnActor targetRef =
-    spawnAnonymous system <| props (behavior targetRef)
+    spawnAnonymous system <| props (actor targetRef)
 
 let s =
     Source.actorRef OverflowStrategy.DropNew 1000
