@@ -8,6 +8,7 @@ open Akka.Streams
 open Akka.Streams.Dsl
 open Akkling
 open Akkling.Streams
+open Akka.Actor
 
 let system = System.create "streams-sys" <| Configuration.defaultConfig ()
 
@@ -61,3 +62,26 @@ let s2: IActorRef<string> =
     |> Graph.run mat
 
 s2 <! "Boo"
+
+type MyActor() =
+    inherit ReceiveActor()
+
+    do
+        // Define the message handling logic
+        base.Receive<string>(fun message -> printfn "Received message: %s" message)
+
+let myActorRef = system.ActorOf<MyActor>("myActor")
+
+let scheduler = system.Scheduler
+
+scheduler.ScheduleTellRepeatedly(
+    TimeSpan.FromSeconds(1),
+    TimeSpan.FromSeconds(5),
+    myActorRef,
+    "Hello from scheduler",
+    ActorRefs.NoSender
+)
+
+//myActorRef.Tell PoisonPill.Instance
+
+system.Terminate() |> ignore
