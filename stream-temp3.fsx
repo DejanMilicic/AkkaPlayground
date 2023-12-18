@@ -85,3 +85,8 @@ scheduler.ScheduleTellRepeatedly(
 //myActorRef.Tell PoisonPill.Instance
 
 system.Terminate() |> ignore
+
+// http://api.getakka.net/docs/stable/html/3E6D3122.htm
+// https://github.com/petabridge/akka-bootcamp/blob/master/src/Unit-2/lesson3/README.md
+
+
