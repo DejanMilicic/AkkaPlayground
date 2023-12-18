@@ -18,7 +18,7 @@ let actor1 targetRef (m: Actor<_>) =
     let rec loop () =
         actor {
             let! msg = m.Receive()
-            printf "Actor1 Received: %s\n\n" msg
+            printf "\nActor1 Received: %s\n\n" msg
             targetRef <! msg + "!!!"
             return! loop ()
         }
@@ -32,7 +32,7 @@ let actor2 (m: Actor<_>) =
     let rec loop () =
         actor {
             let! msg = m.Receive()
-            printf "Actor2 Received: %s\n\n" msg
+            printf "\nActor2 Received: %s\n\n" msg
             return! loop ()
         }
 
