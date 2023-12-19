@@ -83,8 +83,39 @@ let sendMessageToQueue (message: string) =
 
 // Example usage
 queue.OfferAsync("aaa") |> Async.AwaitTask |> ignore
+//queue.AsyncOffer("aaa") |> Async.AwaitTask |> ignore
+//queue.AsyncOffer("xxx") |!> (typed ActorBase.Context.Self)
 sendMessageToQueue "Hello, world!" |> Async.Start
 
+//====================================================
+
+let queuingActor (queue: ISourceQueueWithComplete<string>) (m: Actor<string>) =
+    let rec loop () =
+        actor {
+            let! msg = m.Receive()
+            printf "\n queuingActor Received: %s\n\n" msg
+
+            queue.OfferAsync(msg) |> Async.AwaitTask |> ignore
+
+            return! loop ()
+        }
+
+    loop ()
+
+let queuingActorRef queue =
+    spawnAnonymous system <| props (queuingActor queue)
+
+let myQ: ISourceQueueWithComplete<string> =
+    Source.queue OverflowStrategy.Backpressure 1000
+    //|> Source.toMat Sink.ignore Keep.left
+    |> Source.toMat (Sink.forEach (fun s -> printfn $"\n Received in the QUEUE : {s}")) Keep.left
+    |> Graph.run mat
+
+let xxx = queuingActorRef myQ
+
+xxx <! "Hello, world!"
+
+//====================================================
 
 type MyActor() =
     inherit ReceiveActor()
