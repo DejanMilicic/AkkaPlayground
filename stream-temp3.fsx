@@ -63,6 +63,29 @@ let s2: IActorRef<string> =
 
 s2 <! "Boo"
 
+let s3: ISourceQueueWithComplete<string> =
+    Source.queue OverflowStrategy.Backpressure 1000
+    |> Source.toMat (Sink.forEach (fun s -> s2 <! s)) Keep.left
+    |> Graph.run mat
+
+// Function to send a message to the queue
+let sendMessageToQueue (message: string) =
+    async {
+        let! result = s3.OfferAsync(message) |> Async.AwaitTask
+
+        match result with
+        | :? QueueOfferResult.Enqueued -> printfn "Message '%s' enqueued successfully." message
+        | :? QueueOfferResult.Dropped -> printfn "Message '%s' was dropped." message
+        | :? QueueOfferResult.QueueClosed -> printfn "Queue is closed. Cannot enqueue message '%s'." message
+        | :? QueueOfferResult.Failure as ex -> printfn "Failed to enqueue message '%s': %A" message ex
+        | _ -> false |> ignore
+    }
+
+// Example usage
+s3.OfferAsync("aaa") |> Async.AwaitTask |> ignore
+sendMessageToQueue "Hello, world!" |> Async.Start
+
+
 type MyActor() =
     inherit ReceiveActor()
 
