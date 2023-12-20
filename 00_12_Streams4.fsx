@@ -44,3 +44,26 @@ system.Scheduler.ScheduleTellRepeatedly(
     Message "World 2",
     ActorRefs.NoSender
 )
+
+
+//=========================================================================================================
+
+type GreetingActor2() =
+    inherit ReceiveActor()
+
+    do
+        base.Receive<GreetingActorMsg> (function
+            | Message msg -> printfn $"Hello {msg}")
+
+
+let greeter2 = system.ActorOf<GreetingActor2> "greeter"
+
+"World" |> Message |> greeter2.Tell
+
+system.Scheduler.ScheduleTellRepeatedly(
+    TimeSpan.FromSeconds(1),
+    TimeSpan.FromSeconds(5),
+    greeter2,
+    Message "Alternative World",
+    ActorRefs.NoSender
+)
