@@ -17,8 +17,8 @@ let handler =
     |> Flow.mapMatValue ignore
     |> Flow.via (Framing.delimiter true 256 (ByteString.FromString "\r\n"))
     |> Flow.map string
-    |> Flow.iter (printfn "Server received: %s")
-    |> Flow.map (sprintf "%s!!!")
+    |> Flow.iter (printfn "\n\tServer Received: %s")
+    |> Flow.map (sprintf "%s, Server greets you!!!")
     |> Flow.map ByteString.FromString
 
 // simple server
@@ -29,7 +29,7 @@ async {
         |> Tcp.bind "127.0.0.1" 5000
         |> Source.toMat
             (Sink.forEach (fun conn ->
-                printfn "Accepted: %s" <| string conn.RemoteAddress
+                printfn "\n\tServer Accepted Stream from: %s" <| string conn.RemoteAddress
                 conn.Flow |> Flow.join handler |> Graph.run mat |> ignore))
             Keep.left
         |> Graph.run mat
