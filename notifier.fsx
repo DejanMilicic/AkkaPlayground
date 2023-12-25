@@ -57,9 +57,12 @@ let sendNotifications =
         |> Seq.iter (fun (sub: RegionalEventSubscriber) ->
             printfn $"Sending notification about event '{sub.Event.Name}' to '{sub.Subscriber}'"))
 
-Source.ofSeq [ xMasDay; xMasDay2 ]
-|> Source.via findRegions
-|> Source.via findSubscribers
-|> Source.toSink sendNotifications
-|> Graph.runnable
-|> Graph.run mat
+let scheduler () =
+    Source.ofSeq [ xMasDay; xMasDay2 ]
+    |> Source.via findRegions
+    |> Source.via findSubscribers
+    |> Source.toSink sendNotifications
+    |> Graph.runnable
+    |> Graph.run mat
+
+scheduler () |> ignore
