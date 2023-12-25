@@ -51,17 +51,17 @@ let findSubscribers: Flow<RegionalEvent seq, RegionalEventSubscriber seq, NotUse
               Region = regionalEvent.Region
               Subscriber = "John Doe" }))
 
-let scheduler (notifier) =
+let scheduler (sendNotification) =
     Source.ofSeq [ xMasDay; xMasDay2 ]
     |> Source.via findRegions
     |> Source.via findSubscribers
-    |> Source.toMat (Sink.forEach notifier) Keep.none
+    |> Source.toMat (Sink.forEach sendNotification) Keep.none
     |> Graph.runnable
     |> Graph.run mat
 
-let notifier (subs: RegionalEventSubscriber seq) =
+let sendNotification (subs: RegionalEventSubscriber seq) =
     subs
     |> Seq.iter (fun sub -> printfn $"Sending notification about event '{sub.Event.Name}' to '{sub.Subscriber}'")
     |> ignore
 
-scheduler notifier |> ignore
+scheduler sendNotification |> ignore
