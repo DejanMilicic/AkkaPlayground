@@ -30,20 +30,13 @@ type RegionalEventSubscriber =
       Region: Region
       Subscriber: Subscriber }
 
-let xMasDay =
-    { Name = "Christmas"
-      Date = new DateTime(2023, 12, 25) }
-
-let xMasDay2 =
-    { Name = "Christmas Day 2"
-      Date = new DateTime(2023, 12, 26) }
-
-let scheduler
+let notifier
     (regionsFinder: Event -> RegionalEvent seq)
     (subscribersFinder: RegionalEvent seq -> RegionalEventSubscriber seq)
     (notificationsSender: RegionalEventSubscriber seq -> unit)
+    (events: Event seq)
     =
-    Source.ofSeq [ xMasDay; xMasDay2 ]
+    Source.ofSeq events
     |> Source.via (Flow.Create<Event>() |> Flow.map regionsFinder)
     |> Source.via (Flow.Create<RegionalEvent seq>() |> Flow.map subscribersFinder)
     |> Source.toMat (Sink.forEach notificationsSender) Keep.none
@@ -67,4 +60,17 @@ let notificationsSender (subs: RegionalEventSubscriber seq) : unit =
     |> Seq.iter (fun sub -> printfn $"Sending notification about event '{sub.Event.Name}' to '{sub.Subscriber}'")
     |> ignore
 
-scheduler regionsFinder subscribersFinder notificationsSender |> ignore
+let noty: (Event seq -> unit) =
+    notifier regionsFinder subscribersFinder notificationsSender
+
+//================================================
+
+let xMasDay =
+    { Name = "Christmas"
+      Date = new DateTime(2023, 12, 25) }
+
+let xMasDay2 =
+    { Name = "Christmas Day 2"
+      Date = new DateTime(2023, 12, 26) }
+
+[ xMasDay; xMasDay2 ] |> noty |> ignore
