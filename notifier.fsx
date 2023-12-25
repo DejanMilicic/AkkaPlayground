@@ -51,18 +51,17 @@ let findSubscribers: Flow<RegionalEvent seq, RegionalEventSubscriber seq, NotUse
               Region = regionalEvent.Region
               Subscriber = "John Doe" }))
 
-let sendNotifications =
-    Sink.forEach (fun (subscribers: RegionalEventSubscriber seq) ->
-        subscribers
-        |> Seq.iter (fun (sub: RegionalEventSubscriber) ->
-            printfn $"Sending notification about event '{sub.Event.Name}' to '{sub.Subscriber}'"))
-
-let scheduler () =
+let scheduler (notifier) =
     Source.ofSeq [ xMasDay; xMasDay2 ]
     |> Source.via findRegions
     |> Source.via findSubscribers
-    |> Source.toSink sendNotifications
+    |> Source.toMat (Sink.forEach notifier) Keep.none
     |> Graph.runnable
     |> Graph.run mat
 
-scheduler () |> ignore
+let notifier (subs: RegionalEventSubscriber seq) =
+    subs
+    |> Seq.iter (fun sub -> printfn $"Sending notification about event '{sub.Event.Name}' to '{sub.Subscriber}'")
+    |> ignore
+
+scheduler notifier |> ignore
