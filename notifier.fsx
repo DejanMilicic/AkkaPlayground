@@ -47,8 +47,16 @@ let notifier
 
 let regionalEventsFinder (date: DateOnly) : RegionalEvent seq =
     seq {
-        { Event = { Name = "Xmas"; Date = date }
-          Region = "France" }
+        match date with
+        | _ when date.Day = 25 && date.Month = 12 ->
+            { Event = { Name = "Xmas"; Date = date }
+              Region = "France" }
+
+            { Event = { Name = "Xmas"; Date = date }
+              Region = "Germany" }
+        | _ when date.Day = 26 && date.Month = 12 ->
+            { Event = { Name = "Xmas Day 2"; Date = date }
+              Region = "Sweden" }
     }
 
 let subscribersFinder (regionalEvents: RegionalEvent seq) : RegionalEventSubscriber seq =
@@ -60,7 +68,8 @@ let subscribersFinder (regionalEvents: RegionalEvent seq) : RegionalEventSubscri
 
 let notificationsSender (subs: RegionalEventSubscriber seq) : unit =
     subs
-    |> Seq.iter (fun sub -> printfn $"Sending notification about event '{sub.Event.Name}' to '{sub.Subscriber}'")
+    |> Seq.iter (fun sub ->
+        printfn $"Sending notification about event '{sub.Event.Name} @ {sub.Region}' to '{sub.Subscriber}'")
     |> ignore
 
 let noty: (DateOnly seq -> unit) =
