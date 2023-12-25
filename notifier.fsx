@@ -17,47 +17,49 @@ let mat = system.Materializer()
 
 //=================================================
 
-type EventDay = DateTime
+type Event = { Name: string; Date: DateTime }
 
 type Region = string
 
-type RegionalEvent = { EventDay: EventDay; Region: Region }
+type RegionalEvent = { Event: Event; Region: Region }
 
 type Subscriber = string
 
 type RegionalEventSubscriber =
-    { EventDay: EventDay
+    { Event: Event
       Region: Region
       Subscriber: Subscriber }
 
-let xMasDay = new DateTime(2023, 12, 25)
-let xMasDay2 = new DateTime(2023, 12, 26)
+let xMasDay =
+    { Name = "Christmas"
+      Date = new DateTime(2023, 12, 25) }
 
-let findRegions: Flow<EventDay, RegionalEvent seq, NotUsed> =
-    Flow.Create<EventDay>()
-    |> Flow.map (fun eventDay ->
-        seq {
-            { EventDay = eventDay
-              Region = "France" }
-        })
+let xMasDay2 =
+    { Name = "Christmas Day 2"
+      Date = new DateTime(2023, 12, 26) }
+
+let findRegions: Flow<Event, RegionalEvent seq, NotUsed> =
+    Flow.Create<Event>()
+    |> Flow.map (fun eventDay -> seq { { Event = eventDay; Region = "France" } })
 
 let findSubscribers: Flow<RegionalEvent seq, RegionalEventSubscriber seq, NotUsed> =
     Flow.Create<RegionalEvent seq>()
     |> Flow.map (fun regionalEvents ->
         regionalEvents
         |> Seq.map (fun regionalEvent ->
-            { EventDay = regionalEvent.EventDay
+            { Event = regionalEvent.Event
               Region = regionalEvent.Region
               Subscriber = "John Doe" }))
 
-
-let mySink = Sink.forEach (fun (x: RegionalEventSubscriber seq) -> 
-    x |> Seq.iter (fun (x: RegionalEventSubscriber) -> 
-        printfn "%A" x))
+let sendNotifications =
+    Sink.forEach (fun (subscribers: RegionalEventSubscriber seq) ->
+        subscribers
+        |> Seq.iter (fun (sub: RegionalEventSubscriber) ->
+            printfn $"Sending notification about event '{sub.Event.Name}' to '{sub.Subscriber}'"))
 
 Source.ofSeq [ xMasDay; xMasDay2 ]
 |> Source.via findRegions
 |> Source.via findSubscribers
-|> Source.toSink mySink
+|> Source.toSink sendNotifications
 |> Graph.runnable
 |> Graph.run mat
