@@ -42,19 +42,10 @@ let findRegions: Flow<Event, RegionalEvent seq, NotUsed> =
     Flow.Create<Event>()
     |> Flow.map (fun eventDay -> seq { { Event = eventDay; Region = "France" } })
 
-let findSubscribers: Flow<RegionalEvent seq, RegionalEventSubscriber seq, NotUsed> =
-    Flow.Create<RegionalEvent seq>()
-    |> Flow.map (fun regionalEvents ->
-        regionalEvents
-        |> Seq.map (fun regionalEvent ->
-            { Event = regionalEvent.Event
-              Region = regionalEvent.Region
-              Subscriber = "John Doe" }))
-
-let scheduler (sendNotification) =
+let scheduler sendNotification findSubscribers =
     Source.ofSeq [ xMasDay; xMasDay2 ]
     |> Source.via findRegions
-    |> Source.via findSubscribers
+    |> Source.via (Flow.Create<RegionalEvent seq>() |> Flow.map findSubscribers)
     |> Source.toMat (Sink.forEach sendNotification) Keep.none
     |> Graph.runnable
     |> Graph.run mat
@@ -64,4 +55,11 @@ let sendNotification (subs: RegionalEventSubscriber seq) =
     |> Seq.iter (fun sub -> printfn $"Sending notification about event '{sub.Event.Name}' to '{sub.Subscriber}'")
     |> ignore
 
-scheduler sendNotification |> ignore
+let findSubscribers (regionalEvents: RegionalEvent seq) =
+    regionalEvents
+    |> Seq.map (fun regionalEvent ->
+        { Event = regionalEvent.Event
+          Region = regionalEvent.Region
+          Subscriber = "John Doe" })
+
+scheduler sendNotification findSubscribers |> ignore
