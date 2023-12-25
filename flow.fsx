@@ -32,3 +32,13 @@ let mySink = Sink.forEach (fun x -> printfn "%d" x)
 
 // Step 5: Run the Stream
 sourceViaFlow.To(mySink) |> Graph.runnable |> Graph.run mat
+
+//=================================================
+
+Source.ofList [ 1..10 ]
+|> Source.via myFlow
+|> Source.toSink mySink
+|> Graph.runnable
+|> Graph.run mat
+
+//=================================================
