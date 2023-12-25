@@ -42,3 +42,9 @@ Source.ofList [ 1..10 ]
 |> Graph.run mat
 
 //=================================================
+
+Source.Tick (TimeSpan.FromSeconds(1.0), TimeSpan.FromSeconds(1.0), 1)
+|> Source.via myFlow
+|> Source.toSink mySink
+|> Graph.runnable
+|> Graph.run mat
