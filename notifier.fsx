@@ -17,7 +17,7 @@ let mat = system.Materializer()
 
 //=================================================
 
-type Event = { Name: string; Date: DateTime }
+type Event = { Name: string; Date: DateOnly }
 
 type Region = string
 
@@ -31,13 +31,13 @@ type RegionalEventSubscriber =
       Subscriber: Subscriber }
 
 let notifier
-    (regionsFinder: Event -> RegionalEvent seq)
+    (regionalEventsFinder: DateOnly -> RegionalEvent seq)
     (subscribersFinder: RegionalEvent seq -> RegionalEventSubscriber seq)
     (notificationsSender: RegionalEventSubscriber seq -> unit)
-    (events: Event seq)
+    (events: DateOnly seq)
     =
     Source.ofSeq events
-    |> Source.via (Flow.Create<Event>() |> Flow.map regionsFinder)
+    |> Source.via (Flow.Create<DateOnly>() |> Flow.map regionalEventsFinder)
     |> Source.via (Flow.Create<RegionalEvent seq>() |> Flow.map subscribersFinder)
     |> Source.toMat (Sink.forEach notificationsSender) Keep.none
     |> Graph.runnable
@@ -45,8 +45,11 @@ let notifier
 
 //===============================================
 
-let regionsFinder (event: Event) : RegionalEvent seq =
-    seq { { Event = event; Region = "France" } }
+let regionalEventsFinder (date: DateOnly) : RegionalEvent seq =
+    seq {
+        { Event = { Name = "Xmas"; Date = date }
+          Region = "France" }
+    }
 
 let subscribersFinder (regionalEvents: RegionalEvent seq) : RegionalEventSubscriber seq =
     regionalEvents
@@ -60,17 +63,9 @@ let notificationsSender (subs: RegionalEventSubscriber seq) : unit =
     |> Seq.iter (fun sub -> printfn $"Sending notification about event '{sub.Event.Name}' to '{sub.Subscriber}'")
     |> ignore
 
-let noty: (Event seq -> unit) =
-    notifier regionsFinder subscribersFinder notificationsSender
+let noty: (DateOnly seq -> unit) =
+    notifier regionalEventsFinder subscribersFinder notificationsSender
 
 //================================================
 
-let xMasDay =
-    { Name = "Christmas"
-      Date = new DateTime(2023, 12, 25) }
-
-let xMasDay2 =
-    { Name = "Christmas Day 2"
-      Date = new DateTime(2023, 12, 26) }
-
-[ xMasDay; xMasDay2 ] |> noty |> ignore
+[ new DateOnly(2023, 12, 25); new DateOnly(2023, 12, 26) ] |> noty |> ignore
