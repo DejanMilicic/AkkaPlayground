@@ -10,6 +10,7 @@ open Akka.Streams.Dsl
 open Akkling.Streams
 open System
 open Akka
+open System.Collections.Generic
 
 let system = System.create "scheduler" <| Configuration.defaultConfig ()
 
@@ -45,19 +46,36 @@ let notifier
 
 //===============================================
 
-let regionalEventsFinder (date: DateOnly) : RegionalEvent seq =
-    seq {
-        match date with
-        | _ when date.Day = 25 && date.Month = 12 ->
-            { Event = { Name = "Xmas"; Date = date }
-              Region = "France" }
+let events = new Dictionary<DateOnly, RegionalEvent seq>()
 
-            { Event = { Name = "Xmas"; Date = date }
-              Region = "Germany" }
-        | _ when date.Day = 26 && date.Month = 12 ->
-            { Event = { Name = "Xmas Day 2"; Date = date }
-              Region = "Sweden" }
+events.Add(
+    new DateOnly(2023, 12, 25),
+    seq {
+        { Event =
+            { Name = "Xmas"
+              Date = new DateOnly(2023, 12, 25) }
+          Region = "France" }
+
+        { Event =
+            { Name = "Xmas"
+              Date = new DateOnly(2023, 12, 25) }
+          Region = "Germany" }
     }
+)
+
+events.Add(
+    new DateOnly(2023, 12, 26),
+    seq {
+        { Event =
+            { Name = "Xmas Day 2"
+              Date = new DateOnly(2023, 12, 26) }
+          Region = "France" }
+
+    }
+)
+
+let regionalEventsFinder date =
+    if events.ContainsKey(date) then events[date] else Seq.empty
 
 let subscribersFinder (regionalEvents: RegionalEvent seq) : RegionalEventSubscriber seq =
     regionalEvents
