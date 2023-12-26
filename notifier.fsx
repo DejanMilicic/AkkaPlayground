@@ -74,20 +74,37 @@ events.Add(
     }
 )
 
+let subscribers = new Dictionary<Region, Subscriber seq>()
+
+subscribers.Add("France", seq { "john@doe.com" })
+
+subscribers.Add(
+    "Germany",
+    seq {
+        "john@doe.com"
+        "jane@doe.com"
+    }
+)
+
 let regionalEventsFinder date =
     if events.ContainsKey(date) then events[date] else Seq.empty
 
 let subscribersFinder (regionalEvents: RegionalEvent seq) : RegionalEventSubscriber seq =
     regionalEvents
-    |> Seq.map (fun regionalEvent ->
-        { Event = regionalEvent.Event
-          Region = regionalEvent.Region
-          Subscriber = "John Doe" })
+    |> Seq.collect (fun regionalEvent ->
+        if (subscribers.ContainsKey(regionalEvent.Region)) then
+            subscribers[regionalEvent.Region]
+            |> Seq.map (fun subscriber ->
+                { Event = regionalEvent.Event
+                  Region = regionalEvent.Region
+                  Subscriber = subscriber })
+        else
+            Seq.empty)
 
 let notificationsSender (subs: RegionalEventSubscriber seq) : unit =
     subs
     |> Seq.iter (fun sub ->
-        printfn $"Sending notification about event '{sub.Event.Name} @ {sub.Region}' to '{sub.Subscriber}'")
+        printfn $"Sending notification about event '{sub.Event.Date} - {sub.Event.Name} @ {sub.Region}' to '{sub.Subscriber}'")
     |> ignore
 
 let noty: (DateOnly seq -> unit) =
@@ -95,4 +112,5 @@ let noty: (DateOnly seq -> unit) =
 
 //================================================
 
-[ new DateOnly(2023, 12, 25); new DateOnly(2023, 12, 26) ] |> noty |> ignore
+[ new DateOnly(2023, 12, 25) ] |> noty |> ignore
+[ new DateOnly(2023, 12, 26) ] |> noty |> ignore
