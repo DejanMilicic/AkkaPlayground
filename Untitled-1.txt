@@ -1,0 +1,78 @@
+//===================================================================================================
+// checkpoint, unverified below
+//===================================================================================================
+
+// Events Finder Actor
+
+type FindEventsForRegion = {
+    Region: string
+    Date: DateTime
+}
+
+// todo : add queue where events will be stored
+let eventFinder (mailbox: Actor<FindEventsForRegion>) =
+    let rec loop () =
+        actor {
+            let! msg = mailbox.Receive()
+
+            printfn $"fetching events for: {msg.Region} on {msg.Date.ToShortDateString()}"
+
+            return! loop ()
+        }
+
+    loop ()
+
+//===================================================================================================
+// compose pipeline
+
+
+
+
+// Define the message type
+type Message = Msg of int
+
+// Define an Actor that sends messages to a Source.Queue
+let producerActor (queue: ISourceQueueWithComplete<int>) (mailbox: Actor<Message>) =
+    let rec loop () =
+        actor {
+            let! msg = mailbox.Receive()
+
+            match msg with
+            | Msg value ->
+                do! queue.OfferAsync(5)
+                return! loop ()
+
+            return! loop ()
+        }
+
+    loop ()
+
+let sourceQueue = Source.queue OverflowStrategy.Backpressure 10
+
+// let producerActor = //system.ActorOf(producerProps, "producer");
+//     spawn system "producer" <| props (producerActor sourceQueue)
+
+let producerActor (queue: ISourceQueueWithComplete<Message>) =
+    actor {
+        let rec loop () = async {
+            // Receive a message
+            let! msg = mailbox.Receive()
+
+            match msg with
+            | Msg value ->
+                // Offer the message to the queue and wait for the offer result
+                let! offerResult = queue.OfferAsync(Msg value) |> Async.AwaitTask
+                match offerResult with
+                | QueueOfferResult.Enqueued -> ()
+                | _ -> () // Handle other cases like Dropped, Failure, etc.
+
+                return! loop ()
+        }
+        loop ()
+    }
+
+
+
+
+
+

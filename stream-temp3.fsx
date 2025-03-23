@@ -143,4 +143,61 @@ system.Terminate() |> ignore
 // http://api.getakka.net/docs/stable/html/3E6D3122.htm
 // https://github.com/petabridge/akka-bootcamp/blob/master/src/Unit-2/lesson3/README.md
 
+//===========================================
 
+
+
+//===========================================
+(*
+- table with aggregated events [event name, event description, submit date, event target date]
+- every day, fetch all events that are not passed yet
+    - for each event fetch regions
+    - find all subscribers who wants to be notified exactly N days before event target date
+        (target date - today = K)
+    - find users intersted in a specific region and would like to be notified exactly K days before event target date
+    - another table with users and theirt notification preferences
+    - send one email per : one user, region, event, date
+
+- notification can be email, sms, ....
+
+- 1-30 days of notifications ahead
+
+- Q: what happens with newly registered users?
+- Q: what about immediate events, e.g. "Queen is dead"?
+    - they should be sent immediately
+
+Implementation
+- two source actors
+- Actor1: immediate (CQRS immediate events)
+- Actor2: scheduled (CQRS scheduled events)
+- Stream.merge of these two streams
+- no need to persist anything
+
+Implementation plan
+- create two actors
+- mock immediate one
+- holiday actor
+    - read configuration
+    - emit event
+    - same actor will pick it up
+        - retrieve all the events, not passed yet
+        - for each event
+            - retrieve all regions
+            - for each region
+                - retrieve all subscribers, where
+                    - date of interest should be exactly K days, meaning "today" is the date to send notification
+                    - send notification
+
+possible implementation
+- actor1 with duty to send notification
+- actor2 that would resolve subscriber from region (receives event and region)
+- actor3 that would fetch events and regions
+
+scheduler |> actor3 |> actor2 |> actor1
+
+immediate_actor |> actor2
+
+study: https://getakka.net/articles/streams/integration.html
+
+
+*)
